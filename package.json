@@ -9,7 +9,11 @@
     "dev": "ts-node src/index.ts",
     "dashboard": "ts-node src/dashboard.ts",
     "agent": "ts-node src/index.ts --mode agent",
-    "monitor": "ts-node src/index.ts --mode monitor"
+    "monitor": "ts-node src/index.ts --mode monitor",
+    "backtest": "ts-node src/backtest/index.ts",
+    "backtest:synthetic": "ts-node src/backtest/index.ts --synthetic",
+    "backtest:180": "ts-node src/backtest/index.ts --days 180",
+    "backtest:365": "ts-node src/backtest/index.ts --days 365"
   },
   "keywords": ["defi", "2xswap", "trading", "agent", "leverage", "no-liquidation"],
   "license": "MIT",

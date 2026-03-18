@@ -80,6 +80,44 @@ export function maCrossover(
   return null;
 }
 
+export interface BollingerBands {
+  upper: number;
+  middle: number;
+  lower: number;
+  bandwidth: number;
+}
+
+/**
+ * Bollinger Bands
+ * @param data Price array
+ * @param period SMA period (default 20)
+ * @param stdDev Standard deviation multiplier (default 2)
+ */
+export function bollingerBands(
+  data: number[],
+  period = 20,
+  stdDev = 2
+): BollingerBands | null {
+  if (data.length < period) return null;
+  const slice = data.slice(-period);
+  const middle = slice.reduce((a, b) => a + b, 0) / period;
+  const variance = slice.reduce((a, v) => a + (v - middle) ** 2, 0) / period;
+  const sd = Math.sqrt(variance);
+  const upper = middle + stdDev * sd;
+  const lower = middle - stdDev * sd;
+  return { upper, middle, lower, bandwidth: (upper - lower) / middle };
+}
+
+/**
+ * VWAP approximation (using price only, no volume data).
+ * Returns the average of typical prices over the lookback period.
+ */
+export function vwap(data: number[], lookback = 24): number | null {
+  if (data.length < lookback) return null;
+  const slice = data.slice(-lookback);
+  return slice.reduce((a, b) => a + b, 0) / slice.length;
+}
+
 export interface SignalSummary {
   asset: string;
   price: number;

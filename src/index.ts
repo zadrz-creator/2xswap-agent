@@ -40,6 +40,40 @@ async function main() {
       break;
     }
 
+    case 'backtest': {
+      // Dynamic import to avoid loading ethers if not needed
+      const { BacktestEngine } = await import('./backtest/engine');
+      const { loadHistoricalBars, generateSyntheticBars } = await import('./backtest/historical');
+      const { renderBacktestReport } = await import('./backtest/report');
+
+      const days = parseInt(args.find((a) => a.startsWith('--days='))?.split('=')[1] ?? '180', 10);
+      const useSynthetic = args.includes('--synthetic');
+      const capital = parseFloat(args.find((a) => a.startsWith('--capital='))?.split('=')[1] ?? '1000');
+
+      logger.info(`Backtest mode: ${days} days | $${capital} capital`);
+
+      let bars;
+      if (useSynthetic) {
+        bars = generateSyntheticBars(days);
+      } else {
+        try {
+          bars = await loadHistoricalBars(days);
+        } catch {
+          logger.warn('CoinGecko fetch failed, using synthetic data');
+          bars = generateSyntheticBars(days);
+        }
+      }
+
+      const strategies = ['momentum', 'mean-reversion', 'combined'] as const;
+      const results = [];
+      for (const strategy of strategies) {
+        const engine = new BacktestEngine(bars, strategy, capital, 0.25, 4);
+        results.push(engine.run());
+      }
+      renderBacktestReport(results);
+      break;
+    }
+
     case 'info': {
       // One-shot: print protocol info and exit
       const agent = new TradingAgent();
