@@ -13,7 +13,11 @@
     "backtest": "ts-node src/backtest/index.ts",
     "backtest:synthetic": "ts-node src/backtest/index.ts --synthetic",
     "backtest:180": "ts-node src/backtest/index.ts --days 180",
-    "backtest:365": "ts-node src/backtest/index.ts --days 365"
+    "backtest:365": "ts-node src/backtest/index.ts --days 365",
+    "test": "ts-node src/tests/run-all.ts",
+    "test:indicators": "ts-node src/tests/indicators.test.ts",
+    "test:strategies": "ts-node src/tests/strategies.test.ts",
+    "test:backtest": "ts-node src/tests/backtest.test.ts"
   },
   "keywords": ["defi", "2xswap", "trading", "agent", "leverage", "no-liquidation"],
   "license": "MIT",
