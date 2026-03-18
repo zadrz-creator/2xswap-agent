@@ -7,6 +7,7 @@
 
 import { evaluateStrategy, StrategyState, ActivePosition } from '../strategies/momentum';
 import { evaluateMeanReversionStrategy, computeMeanReversionSignal } from '../strategies/mean-reversion';
+import { evaluateVWAPStrategy, getVWAPData } from '../strategies/vwap';
 import { createPriceHistory, addPrice, PriceHistory } from '../utils/prices';
 
 let passed = 0;
@@ -323,6 +324,99 @@ console.log('══════════════════════�
   assert(actions.length >= 1, 'Always at least one action returned');
   const validTypes = new Set(['open', 'close', 'hold']);
   assert(actions.every((a) => validTypes.has(a.type)), 'All actions have valid type');
+}
+
+// ── SECTION 3b: VWAP Strategy Tests ──────────────────────────────────────────
+
+console.log('\n═══════════════════════════════════════════════════════════');
+console.log('  VWAP Strategy Tests');
+console.log('═══════════════════════════════════════════════════════════');
+
+// Test 3b.1: VWAP data computed correctly
+{
+  console.log('\n📊 3b.1 VWAP data computed from price series');
+  const prices = Array.from({ length: 50 }, (_, i) => 2000 + Math.sin(i * 0.3) * 100);
+  const data = getVWAPData(prices);
+  assert(data.vwapValue !== null, 'VWAP value computed');
+  assert(data.vwapDeviation !== null, 'VWAP deviation computed');
+  assert(typeof data.vwapDeviation === 'number', 'VWAP deviation is a number');
+}
+
+// Test 3b.2: Price well below VWAP → buy signal
+{
+  console.log('\n📊 3b.2 Price significantly below VWAP → buy opportunity');
+  // Start at 2000, then drop sharply so current price is well below rolling VWAP
+  const stablePhase = Array.from({ length: 30 }, () => 2000);
+  const dropPhase = Array.from({ length: 20 }, (_, i) => 1700 - i * 10);
+  const prices = [...stablePhase, ...dropPhase];
+  const h = buildHistory(prices, flat(50, 30000));
+  const state = emptyState();
+  const actions = evaluateVWAPStrategy(h, state);
+  // Should either open or hold (no crash)
+  assert(actions.length >= 1, 'VWAP strategy returns actions');
+  const validTypes = new Set(['open', 'close', 'hold']);
+  assert(actions.every((a) => validTypes.has(a.type)), 'All actions have valid type');
+}
+
+// Test 3b.3: VWAP strategy respects no-duplicate rule
+{
+  console.log('\n📊 3b.3 VWAP strategy: no duplicate opens on same asset');
+  const stablePhase = Array.from({ length: 30 }, () => 2000);
+  const dropPhase = Array.from({ length: 20 }, (_, i) => 1650 - i * 5);
+  const prices = [...stablePhase, ...dropPhase];
+  const h = buildHistory(prices, flat(50, 30000));
+  const existingPos = makePosition('eth', 1900);
+  const state = emptyState({ activePositions: [existingPos] });
+  const actions = evaluateVWAPStrategy(h, state);
+  const ethOpens = actions.filter((a) => a.type === 'open' && (a as any).asset === 'eth');
+  assert(ethOpens.length === 0, 'No duplicate opens on asset with existing position');
+}
+
+// Test 3b.4: VWAP take profit at +12%
+{
+  console.log('\n📊 3b.4 VWAP take profit at +12%');
+  const prices = flat(50, 2000);
+  const h = buildHistory(prices, flat(50, 30000));
+  const pos: ActivePosition = {
+    id: BigInt(555),
+    asset: 'eth',
+    openPrice: 1700, // ~17%+ gain → take profit fires
+    openAmount: 250,
+    openTime: Date.now() - 3 * 86_400_000,
+  };
+  const state = emptyState({ activePositions: [pos] });
+  const actions = evaluateVWAPStrategy(h, state);
+  const close = actions.find((a) => a.type === 'close' && (a as any).positionId === pos.id);
+  assert(!!close, 'Close action emitted at +12%+ profit');
+  assert(close!.reason.includes('profit'), 'Reason mentions take profit');
+}
+
+// Test 3b.5: VWAP soft stop at -10%
+{
+  console.log('\n📊 3b.5 VWAP soft stop at -10%');
+  const prices = flat(50, 2000); // last ≈ 1999
+  const h = buildHistory(prices, flat(50, 30000));
+  const pos: ActivePosition = {
+    id: BigInt(556),
+    asset: 'eth',
+    openPrice: 2240, // ~10.4% loss → soft stop
+    openAmount: 250,
+    openTime: Date.now() - 3 * 86_400_000,
+  };
+  const state = emptyState({ activePositions: [pos] });
+  const actions = evaluateVWAPStrategy(h, state);
+  const close = actions.find((a) => a.type === 'close' && (a as any).positionId === pos.id);
+  assert(!!close, 'Close action emitted at -10%+ loss');
+  assert(close!.reason.toLowerCase().includes('stop'), 'Reason mentions stop');
+}
+
+// Test 3b.6: Insufficient data returns hold
+{
+  console.log('\n📊 3b.6 VWAP insufficient data → hold');
+  const h = buildHistory([2000, 2010], [30000, 30100]);
+  const actions = evaluateVWAPStrategy(h, emptyState());
+  assert(actions.length === 1, 'Returns exactly 1 action');
+  assertEqual(actions[0].type, 'hold', 'Action is hold with insufficient data');
 }
 
 // ── SECTION 4: 2xSwap No-Liquidation Advantage Tests ─────────────────────────

@@ -43,7 +43,7 @@ async function main() {
 
   // Run strategies
   const strategies: StrategyName[] = stratArg === 'all'
-    ? ['momentum', 'mean-reversion', 'combined']
+    ? ['momentum', 'mean-reversion', 'vwap', 'combined']
     : [stratArg as StrategyName];
 
   const results = [];

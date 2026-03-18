@@ -4,6 +4,7 @@ import { TradingAgent } from './agent';
 import { config } from './config';
 import { fetchPrices, createPriceHistory, addPrice, getAssetPrices } from './utils/prices';
 import { computeSignals } from './utils/indicators';
+import { getVWAPData } from './strategies/vwap';
 import { formatUnits } from 'ethers';
 
 const REFRESH_MS = 15_000;
@@ -32,18 +33,19 @@ async function renderDashboard(agent: TradingAgent): Promise<void> {
   const btcPrices = getAssetPrices(state.priceHistory, 'btc');
 
   const signalTable = new Table({
-    head: ['Asset', 'Price', 'RSI', 'SMA 7', 'SMA 25', 'Volatility', 'Signal'].map(h => chalk.cyan(h)),
+    head: ['Asset', 'Price', 'RSI', 'VWAP Dev', 'BB Pos', 'Volatility', 'Signal'].map(h => chalk.cyan(h)),
     style: { head: [], border: ['gray'] },
   });
 
   if (ethPrices.length > 0) {
     const eth = computeSignals(ethPrices, 'ETH');
+    const ethVwap = getVWAPData(ethPrices);
     signalTable.push([
       'ETH',
       `$${eth.price.toFixed(2)}`,
       eth.rsi?.toFixed(1) ?? '—',
-      eth.sma7?.toFixed(0) ?? '—',
-      eth.sma25?.toFixed(0) ?? '—',
+      colorVWAPDev(ethVwap.vwapDeviation),
+      ethVwap.bbPosition !== null ? colorBBPos(ethVwap.bbPosition) : '—',
       eth.volatility ? `${eth.volatility.toFixed(1)}%` : '—',
       colorSignal(eth.overallSignal),
     ]);
@@ -51,12 +53,13 @@ async function renderDashboard(agent: TradingAgent): Promise<void> {
 
   if (btcPrices.length > 0) {
     const btc = computeSignals(btcPrices, 'BTC');
+    const btcVwap = getVWAPData(btcPrices);
     signalTable.push([
       'BTC',
       `$${btc.price.toFixed(2)}`,
       btc.rsi?.toFixed(1) ?? '—',
-      btc.sma7?.toFixed(0) ?? '—',
-      btc.sma25?.toFixed(0) ?? '—',
+      colorVWAPDev(btcVwap.vwapDeviation),
+      btcVwap.bbPosition !== null ? colorBBPos(btcVwap.bbPosition) : '—',
       btc.volatility ? `${btc.volatility.toFixed(1)}%` : '—',
       colorSignal(btc.overallSignal),
     ]);
@@ -133,6 +136,25 @@ async function renderDashboard(agent: TradingAgent): Promise<void> {
   // Footer
   console.log(chalk.gray(`  Refreshing every ${REFRESH_MS / 1000}s | Ctrl+C to exit`));
   console.log(chalk.gray(`  2xSwap: No liquidation. No interest. No funding rates. Agent-safe leverage. ⚡`));
+}
+
+function colorVWAPDev(dev: number | null): string {
+  if (dev === null) return chalk.gray('—');
+  const str = `${dev >= 0 ? '+' : ''}${dev.toFixed(2)}%`;
+  if (dev <= -3) return chalk.green.bold(str); // strongly below VWAP = buy zone
+  if (dev <= -1) return chalk.green(str);
+  if (dev >= 3) return chalk.red.bold(str);   // strongly above VWAP = sell zone
+  if (dev >= 1) return chalk.red(str);
+  return chalk.yellow(str); // near VWAP = neutral
+}
+
+function colorBBPos(pos: number): string {
+  const str = pos.toFixed(2);
+  if (pos <= 0.2) return chalk.green.bold(str);  // near lower band = oversold
+  if (pos <= 0.4) return chalk.green(str);
+  if (pos >= 0.8) return chalk.red.bold(str);    // near upper band = overbought
+  if (pos >= 0.6) return chalk.red(str);
+  return chalk.yellow(str); // middle = neutral
 }
 
 function colorSignal(signal: string): string {

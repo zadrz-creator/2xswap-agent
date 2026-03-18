@@ -4,6 +4,7 @@ import { logger, logDecision } from './utils/logger';
 import { PriceHistory, createPriceHistory, addPrice, fetchPrices, PriceData } from './utils/prices';
 import { evaluateStrategy, ActivePosition, StrategyState, TradeAction } from './strategies/momentum';
 import { evaluateMeanReversionStrategy } from './strategies/mean-reversion';
+import { evaluateVWAPStrategy } from './strategies/vwap';
 import { computeSignals } from './utils/indicators';
 import { getAssetPrices } from './utils/prices';
 import { usdcToWethPath, usdcToWbtcPath, wethToUsdcPath, wbtcToUsdcPath } from './utils/swap-path';
@@ -99,14 +100,15 @@ export class TradingAgent {
       maxTotalExposure: config.maxTotalExposureUsdc,
     };
 
-    // Combined strategy: run both momentum and mean reversion, deduplicate
+    // Combined strategy: run all three strategies (momentum, mean reversion, VWAP), deduplicate
     const momentumActions = evaluateStrategy(this.state.priceHistory, strategyState);
     const mrActions = evaluateMeanReversionStrategy(this.state.priceHistory, strategyState);
+    const vwapActions = evaluateVWAPStrategy(this.state.priceHistory, strategyState);
 
     // Merge: use all close/hold signals, but deduplicate open signals by asset
     const openAssets = new Set<string>();
     const actions: TradeAction[] = [];
-    for (const a of [...momentumActions, ...mrActions]) {
+    for (const a of [...momentumActions, ...mrActions, ...vwapActions]) {
       if (a.type === 'open') {
         if (!openAssets.has(a.asset)) {
           openAssets.add(a.asset);

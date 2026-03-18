@@ -11,10 +11,11 @@
 
 import { evaluateStrategy, ActivePosition, StrategyState, TradeAction } from '../strategies/momentum';
 import { evaluateMeanReversionStrategy } from '../strategies/mean-reversion';
+import { evaluateVWAPStrategy } from '../strategies/vwap';
 import { createPriceHistory, addPrice, getAssetPrices, PriceHistory } from '../utils/prices';
 import { computeSignals } from '../utils/indicators';
 
-export type StrategyName = 'momentum' | 'mean-reversion' | 'combined';
+export type StrategyName = 'momentum' | 'mean-reversion' | 'vwap' | 'combined';
 
 export interface PriceBar {
   timestamp: number;
@@ -325,12 +326,15 @@ export class BacktestEngine {
         return evaluateStrategy(history, state);
       case 'mean-reversion':
         return evaluateMeanReversionStrategy(history, state);
+      case 'vwap':
+        return evaluateVWAPStrategy(history, state);
       case 'combined': {
-        // Run both, deduplicate
+        // Run all three strategies, deduplicate
         const momentum = evaluateStrategy(history, state);
         const mr = evaluateMeanReversionStrategy(history, state);
-        const combined = [...momentum, ...mr];
-        // Deduplicate open signals by asset (prefer momentum for opens, MR for closes)
+        const vwapActions = evaluateVWAPStrategy(history, state);
+        const combined = [...momentum, ...mr, ...vwapActions];
+        // Deduplicate open signals by asset (first-seen wins per asset)
         const opens = new Map<string, TradeAction>();
         const others: TradeAction[] = [];
         for (const a of combined) {
