@@ -1,0 +1,29 @@
+{
+  "name": "2xswap-autonomous-agent",
+  "version": "1.0.0",
+  "description": "Autonomous AI trading agent for 2xSwap — leveraged DeFi positions with no liquidation",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "dashboard": "ts-node src/dashboard.ts",
+    "agent": "ts-node src/index.ts --mode agent",
+    "monitor": "ts-node src/index.ts --mode monitor"
+  },
+  "keywords": ["defi", "2xswap", "trading", "agent", "leverage", "no-liquidation"],
+  "license": "MIT",
+  "dependencies": {
+    "ethers": "^6.13.0",
+    "dotenv": "^16.4.0",
+    "chalk": "^4.1.2",
+    "cli-table3": "^0.6.3",
+    "ora": "^5.4.1",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "ts-node": "^10.9.0",
+    "@types/node": "^20.11.0"
+  }
+}

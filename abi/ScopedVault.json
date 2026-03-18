@@ -1,0 +1,23 @@
+[
+  "function deposit(uint256 amount) external",
+  "function withdraw(uint256 amount) external",
+  "function executeOpenPosition(address x2swap, uint256 assetAmount, uint256 maxDeviationBps, address exchangeAddress, bytes calldata path, uint256 deadline) external returns (uint256)",
+  "function executeClosePosition(address x2swap, uint256 positionId, uint256 maxDeviationBps, address exchangeAddress, bytes calldata path, uint256 deadline) external",
+  "function setAgent(address agent) external",
+  "function setMaxPerTrade(uint256 amount) external",
+  "function setMaxTotalExposure(uint256 amount) external",
+  "function setTimeWindow(uint256 seconds_) external",
+  "function maxPerTrade() external view returns (uint256)",
+  "function maxTotalExposure() external view returns (uint256)",
+  "function currentExposure() external view returns (uint256)",
+  "function timeWindow() external view returns (uint256)",
+  "function agent() external view returns (address)",
+  "function owner() external view returns (address)",
+  "function tradesInWindow() external view returns (uint256)",
+  "event PositionOpened(uint256 indexed positionId, uint256 amount, uint256 timestamp)",
+  "event PositionClosed(uint256 indexed positionId, uint256 timestamp)",
+  "event Deposited(address indexed owner, uint256 amount)",
+  "event Withdrawn(address indexed owner, uint256 amount)",
+  "event AgentUpdated(address indexed oldAgent, address indexed newAgent)",
+  "event LimitsUpdated(uint256 maxPerTrade, uint256 maxTotalExposure, uint256 timeWindow)"
+]
