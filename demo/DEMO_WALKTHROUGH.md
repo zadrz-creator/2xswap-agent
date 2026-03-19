@@ -1,6 +1,6 @@
 # Demo Walkthrough — 2xSwap Autonomous Trading Agent
 
-> Generated: March 19, 2026 | Synthesis Hackathon | 4 strategies, 97 tests, deadline Mar 22 | LOG_LEVEL=error for clean demo output
+> Generated: March 19, 2026 | Synthesis Hackathon | 4 strategies, 97 tests, deadline Mar 22 | LOG_LEVEL=error for clean demo output | ASCII equity curve added
 
 This document shows the agent working: real output, real decisions, real protocol interaction.
 
@@ -137,8 +137,26 @@ Running combined strategy...
 │ COMBINED       │ 41     │ +36.6%   │ -$87.86   │ -8.8% │ -14.7% │ -1.61  │ 1 🛡️         │
 └────────────────┴────────┴──────────┴───────────┴───────┴────────┴────────┴──────────────┘
 
+  📈 Equity Curves — Normalized (start = 100)
+    100% baseline ─────────────────────────────────────────────────
+   117 │                                                                     ✦✦✦│
+       │                                                              ▲▲▲▲▲▲✦▲▲▲│
+       │                                                         ▲▲▲▲▲  ✦   ▲   │
+       │                                                        ▲✦✦ ✦✦✦✦        │
+       │                                    ▲▲▲▲▲▲✦✦✦✦  ▲ ▲ ▲▲✦▲                │
+       │                     ▲▲▲▲▲      ▲▲▲▲✦✦  ✦ ▲▲▲▲▲▲✦▲ ▲✦ ▲                 │
+   107 │        ▲  ▲  ▲     ▲✦✦✦ ✦▲▲▲▲▲▲  ✦✦              ✦✦                 ●●●│
+       │      ▲▲ ▲▲✦▲▲✦▲▲▲▲▲✦   ◆     ✦✦✦✦                             ●   ●●   │
+       │ ▲▲▲▲▲✦✦✦✦✦◆✦✦◆◆ ◆◆  ◆◆◆●◆◆◆        ●●●●●●●●●●● ●●  ●●●●●●●●●●●◆●●●◆    │
+       │▲●●●●●●●●●●●●●●●●●●◆◆●●●─●●●●●●───●●◆──◆─◆◆◆───●──●●─◆─◆◆─◆─◆◆◆─◆◆──────│
+       │                   ●●          ●●●          ◆◆◆ ◆◆  ◆ ◆                 │
+    96 │                                               ◆  ◆◆                    │
+       └────────────────────────────────────────────────────────────────────────┘
+       Day 0                                                    Day 150
+       ▲ MOMENTUM   ● MEAN-REVERSION   ◆ VWAP   ✦ COMBINED
+
    KEY INSIGHT 
-  Best strategy: MEAN-REVERSION — +2.4% return, 63.6% win rate
+  Best strategy: COMBINED — +16.4% return, 71.4% win rate
   Positions that would have been liquidated on standard protocols: 4
   → All survived because 2xSwap has no liquidation. Agent held through drawdowns.
 

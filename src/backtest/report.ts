@@ -7,6 +7,111 @@ import chalk from 'chalk';
 import Table from 'cli-table3';
 import { BacktestResult } from './engine';
 
+// ── ASCII Equity Curve ────────────────────────────────────────────────────────
+
+/**
+ * Renders a multi-strategy equity curve chart side-by-side.
+ * All curves normalized to starting capital = 100.
+ * Height: 12 rows, Width: 80 chars wide.
+ */
+export function renderEquityCurve(results: BacktestResult[], width = 72, height = 12): void {
+  if (results.length === 0 || results[0].equityCurve.length < 2) return;
+
+  // Normalize all equity curves to start at 100
+  const normalized = results.map((r) => {
+    const curve = r.equityCurve;
+    const start = curve[0]?.equity ?? r.startCapital;
+    return curve.map((pt) => (pt.equity / start) * 100);
+  });
+
+  // Downsample all curves to `width` data points
+  const sampled = normalized.map((curve) => {
+    const result: number[] = [];
+    for (let i = 0; i < width; i++) {
+      const idx = Math.floor((i / width) * curve.length);
+      result.push(curve[Math.min(idx, curve.length - 1)]);
+    }
+    return result;
+  });
+
+  // Find Y range across all curves
+  const allValues = sampled.flat();
+  const minY = Math.min(...allValues);
+  const maxY = Math.max(...allValues);
+  const range = maxY - minY || 1;
+
+  // Strategy color/symbol config (no chalk — using chars)
+  const SYMBOLS = ['▲', '●', '◆', '✦'];
+  const COLORS = [chalk.green, chalk.cyan, chalk.yellow, chalk.magenta];
+  const NAMES = results.map((r) => r.strategy.toUpperCase());
+
+  // Build the grid
+  const grid: string[][] = Array.from({ length: height }, () => Array(width).fill(' '));
+
+  // Plot each strategy
+  for (let s = 0; s < sampled.length; s++) {
+    for (let x = 0; x < width; x++) {
+      const val = sampled[s][x];
+      const row = Math.round(((maxY - val) / range) * (height - 1));
+      const clampedRow = Math.max(0, Math.min(height - 1, row));
+
+      // Only draw if the cell is empty or same strategy (avoid overdraw)
+      const cell = grid[clampedRow][x];
+      if (cell === ' ' || cell === '·') {
+        grid[clampedRow][x] = `\x00${s}`;  // encode strategy index
+      }
+    }
+  }
+
+  // Fill background with faint dots at baseline (100)
+  const baselineRow = Math.round(((maxY - 100) / range) * (height - 1));
+  const clampedBaseline = Math.max(0, Math.min(height - 1, baselineRow));
+  for (let x = 0; x < width; x++) {
+    if (grid[clampedBaseline][x] === ' ') {
+      grid[clampedBaseline][x] = '─';
+    }
+  }
+
+  // Print header
+  console.log('\n  ' + chalk.white.bold('📈 Equity Curves — Normalized (start = 100)'));
+  console.log('  ' + chalk.gray(`  100% baseline ─────────────────────────────────────────────────`));
+
+  // Print Y-axis labels + grid
+  const yLabelAt = [0, Math.floor(height / 2), height - 1];
+  const yVals = [maxY, (maxY + minY) / 2, minY];
+
+  for (let row = 0; row < height; row++) {
+    const yLabel = yLabelAt.includes(row)
+      ? chalk.gray(yVals[yLabelAt.indexOf(row)].toFixed(0).padStart(4))
+      : '    ';
+
+    const line = grid[row].map((cell) => {
+      if (cell === '─') return chalk.gray('─');
+      if (cell === ' ') return ' ';
+      const match = cell.match(/^\x00(\d)$/);
+      if (match) {
+        const si = parseInt(match[1], 10);
+        return COLORS[si % COLORS.length](SYMBOLS[si % SYMBOLS.length]);
+      }
+      return cell;
+    }).join('');
+
+    console.log(`  ${yLabel} │${line}│`);
+  }
+
+  // X axis
+  const xAxis = '─'.repeat(width);
+  console.log('       └' + chalk.gray(xAxis) + '┘');
+  console.log(chalk.gray('       Day 0' + ' '.repeat(width - 20) + 'Day ' + results[0].equityCurve.length));
+
+  // Legend
+  const legendItems = results.map((r, i) =>
+    COLORS[i % COLORS.length](SYMBOLS[i % SYMBOLS.length] + ' ' + NAMES[i])
+  );
+  console.log('       ' + legendItems.join('   '));
+  console.log('');
+}
+
 export function renderBacktestReport(results: BacktestResult[]): void {
   console.log('\n');
   console.log(chalk.cyan.bold('  ╔════════════════════════════════════════════════════════════════╗'));
@@ -45,6 +150,9 @@ export function renderBacktestReport(results: BacktestResult[]): void {
 
   console.log(chalk.white.bold('  📊 Strategy Comparison'));
   console.log(summaryTable.toString());
+
+  // ASCII equity curve
+  renderEquityCurve(results);
 
   // Detail for each strategy
   for (const r of results) {

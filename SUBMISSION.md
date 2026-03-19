@@ -75,6 +75,7 @@ Full historical replay engine:
 - Pulls real price data from CoinGecko (falls back to synthetic)
 - Tracks **liquidations avoided** — positions that would die on traditional protocols but survive on 2xSwap
 - Compares all 4 strategies side-by-side with Sharpe ratio, max drawdown, win rate
+- **ASCII equity curve chart** — all 4 strategies plotted on a normalized graph (start=100) so you can visualize relative performance over 180 days at a glance
 
 ### 4. Live Terminal Dashboard (`src/dashboard.ts`)
 Real-time terminal UI showing:
