@@ -64,7 +64,7 @@ async function main() {
         }
       }
 
-      const strategies = ['momentum', 'mean-reversion', 'combined'] as const;
+      const strategies = ['momentum', 'mean-reversion', 'vwap', 'combined'] as const;
       const results = [];
       for (const strategy of strategies) {
         const engine = new BacktestEngine(bars, strategy, capital, 0.25, 4);

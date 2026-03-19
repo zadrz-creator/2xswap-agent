@@ -1,6 +1,6 @@
 # Demo Walkthrough — 2xSwap Autonomous Trading Agent
 
-> Generated: March 19, 2026 | Synthesis Hackathon | 4 strategies, 97 tests, deadline Mar 22
+> Generated: March 19, 2026 | Synthesis Hackathon | 4 strategies, 97 tests, deadline Mar 22 | LOG_LEVEL=error for clean demo output
 
 This document shows the agent working: real output, real decisions, real protocol interaction.
 
@@ -12,6 +12,7 @@ The fastest way to verify the agent is production-ready:
 
 ```bash
 npm test
+# (LOG_LEVEL=error is set automatically — output is clean, no debug noise)
 ```
 
 **Output (97 tests, 3/3 suites passing):**
@@ -99,6 +100,7 @@ This is the hackathon thesis in test form:
 
 ```bash
 npm run backtest:synthetic
+# (LOG_LEVEL=error set automatically — clean output, no log noise)
 ```
 
 **Sample output** (results vary slightly each run due to synthetic data randomization):
@@ -110,13 +112,13 @@ Days: 180 | Strategy: all | Capital: $1000 | Data: synthetic
 
 Using synthetic data (180 bars)
 Running momentum strategy...
-  → 7 trades | Win rate: 28.6% | PnL: -4.7%
+  → 10 trades | Win rate: 50.0% | PnL: -4.9%
 Running mean-reversion strategy...
-  → 14 trades | Win rate: 64.3% | PnL: +3.0%
+  → 11 trades | Win rate: 63.6% | PnL: +2.4%
 Running vwap strategy...
-  → 10 trades | Win rate: 70.0% | PnL: -0.6%
+  → 7 trades | Win rate: 71.4% | PnL: -0.3%
 Running combined strategy...
-  → 40 trades | Win rate: 60.0% | PnL: +0.5%
+  → 41 trades | Win rate: 36.6% | PnL: -8.8%
 
   ╔════════════════════════════════════════════════════════════════╗
   ║   2xSwap Agent — Backtest Results                             ║
@@ -126,17 +128,18 @@ Running combined strategy...
 ┌────────────────┬────────┬──────────┬───────────┬───────┬────────┬────────┬──────────────┐
 │ Strategy       │ Trades │ Win Rate │ Total PnL │ PnL % │ Max DD │ Sharpe │ Liq. Avoided │
 ├────────────────┼────────┼──────────┼───────────┼───────┼────────┼────────┼──────────────┤
-│ MOMENTUM       │ 7      │ +28.6%   │ $47.26    │ -4.7% │ -10.7% │ -0.76  │ 1 🛡️         │
+│ MOMENTUM       │ 10     │ +50.0%   │ -$48.92   │ -4.9% │ -11.1% │ -0.74  │ 1 🛡️         │
 ├────────────────┼────────┼──────────┼───────────┼───────┼────────┼────────┼──────────────┤
-│ MEAN-REVERSION │ 14     │ +64.3%   │ +$29.62   │ +3.0% │ -8.5%  │ 0.78   │ 1 🛡️         │
+│ MEAN-REVERSION │ 11     │ +63.6%   │ +$23.58   │ +2.4% │ -7.5%  │ 0.61   │ 1 🛡️         │
 ├────────────────┼────────┼──────────┼───────────┼───────┼────────┼────────┼──────────────┤
-│ VWAP           │ 10     │ +70.0%   │ $5.71     │ -0.6% │ -12.8% │ -0.06  │ 2 🛡️         │
+│ VWAP           │  7     │ +71.4%   │ -$3.49    │ -0.3% │ -9.5%  │ -0.00  │ 1 🛡️         │
 ├────────────────┼────────┼──────────┼───────────┼───────┼────────┼────────┼──────────────┤
-│ COMBINED       │ 40     │ +60.0%   │ +$5.03    │ +0.5% │ -9.2%  │ 0.16   │ 2 🛡️         │
+│ COMBINED       │ 41     │ +36.6%   │ -$87.86   │ -8.8% │ -14.7% │ -1.61  │ 1 🛡️         │
 └────────────────┴────────┴──────────┴───────────┴───────┴────────┴────────┴──────────────┘
 
    KEY INSIGHT 
-  Positions that would have been liquidated on standard protocols: 6
+  Best strategy: MEAN-REVERSION — +2.4% return, 63.6% win rate
+  Positions that would have been liquidated on standard protocols: 4
   → All survived because 2xSwap has no liquidation. Agent held through drawdowns.
 
   * "Liquidation Avoided" = position went -8%+ drawdown
