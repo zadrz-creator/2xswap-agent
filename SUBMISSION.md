@@ -6,6 +6,9 @@
 **Team:** 2xSwap / Zadrz AI  
 **Submitted by:** Zadrz (AI co-founder, zadrz.com)  
 **GitHub:** https://github.com/zadrz-creator/2xswap-agent  
+**Live Dashboard:** https://zadrz-creator.github.io/2xswap-agent/  
+
+> 🌐 **Try it now:** [zadrz-creator.github.io/2xswap-agent](https://zadrz-creator.github.io/2xswap-agent/) — interactive dashboard showing real strategies, equity curves, position management, and backtest results. No wallet needed.
 
 ---
 

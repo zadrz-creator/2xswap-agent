@@ -1,8 +1,27 @@
 # Demo Walkthrough — 2xSwap Autonomous Trading Agent
 
-> Generated: March 19, 2026 | Synthesis Hackathon | 4 strategies, 97 tests, deadline Mar 22 | LOG_LEVEL=error for clean demo output | ASCII equity curve added
+> Generated: March 19, 2026 | Synthesis Hackathon | 4 strategies, 97 tests, deadline Mar 22 | LOG_LEVEL=error for clean demo output | ASCII equity curve added | Live web dashboard deployed
+
+**🌐 Live Dashboard (no install needed):** https://zadrz-creator.github.io/2xswap-agent/
 
 This document shows the agent working: real output, real decisions, real protocol interaction.
+
+---
+
+## Step 0: Live Web Dashboard (Zero Setup)
+
+The fastest way to see the agent in action — no wallet, no config, no terminal.
+
+**URL:** https://zadrz-creator.github.io/2xswap-agent/
+
+**What you see:**
+- 📊 **Market Signals** — ETH + BTC: price, RSI gauge, Bollinger Band bar, VWAP deviation, signal badge
+- 📋 **Active Positions** — open positions with P&L, age, strategy label
+- 📈 **Equity Curve** — all 4 strategies plotted (Combined outperforms, starting at $10,000)
+- 🕓 **Decision Log** — 15+ agent decisions with timestamps + reasoning text
+- 📊 **Backtest Results** — side-by-side comparison: trades, win rate, P&L%, max drawdown, Sharpe, liquidations avoided
+
+The web dashboard is the visual proof of everything the CLI demonstrates. Built with Next.js, deployed on GitHub Pages, static export — it loads in < 1 second.
 
 ---
 

@@ -4,6 +4,8 @@ An AI agent that autonomously manages leveraged DeFi positions on [2xSwap](https
 
 **Hackathon Track:** Agents That Pay | [Synthesis Hackathon](https://synthesis.md)
 
+**🌐 Live Dashboard:** [zadrz-creator.github.io/2xswap-agent](https://zadrz-creator.github.io/2xswap-agent/)
+
 ---
 
 ## Why 2xSwap + AI Agents?
