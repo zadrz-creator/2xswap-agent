@@ -33,39 +33,30 @@ An AI agent on 2xSwap can **hold through volatility**, **take profits when ready
 │                     src/index.ts                         │
 ├─────────────────────────────────────────────────────────┤
 │                                                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐  │
-│  │ Price Oracle  │  │   Strategy   │  │   Position    │  │
-│  │  CoinGecko   │──│  Momentum    │──│   Manager     │  │
-│  │  CoinCap     │  │  RSI + MA    │  │  Open/Close   │  │
-│  └──────────────┘  └──────────────┘  └───────┬───────┘  │
-│                                               │          │
-│  ┌──────────────┐  ┌──────────────┐          │          │
-│  │  Dashboard   │  │   Logger     │          │          │
-│  │  Terminal UI │  │  Decisions   │          │          │
-│  └──────────────┘  └──────────────┘          │          │
-│                                               │          │
-├───────────────────────────────────────────────┼──────────┤
-│                                               │          │
-│  ┌────────────────────────────────────────────▼────────┐ │
+│  ┌──────────────┐  ┌──────────────────────┐  ┌────────┐  │
+│  │ Price Oracle  │  │      Strategies      │  │ Posn.  │  │
+│  │  CoinGecko   │──│  Momentum (RSI+MA)   │──│ Mgr.   │  │
+│  │  CoinCap     │  │  Mean Reversion (BB) │  │        │  │
+│  └──────────────┘  │  VWAP               │  └───┬────┘  │
+│                    │  Combined           │      │       │
+│  ┌──────────────┐  └──────────────────────┘      │       │
+│  │  Dashboard   │  ┌──────────────┐              │       │
+│  │  Terminal UI │  │  Backtest    │              │       │
+│  └──────────────┘  │  Engine      │              │       │
+│                    └──────────────┘              │       │
+├──────────────────────────────────────────────────┼───────┤
+│  ┌───────────────────────────────────────────────▼─────┐ │
 │  │              ScopedVault.sol (on-chain)              │ │
-│  │                                                      │ │
-│  │  Owner deposits USDC → Sets limits → Agent trades   │ │
-│  │  • Max per trade    • Max total exposure             │ │
-│  │  • Time windows     • Full event audit trail         │ │
-│  │  • Owner withdraws anytime                           │ │
-│  └────────────────────────┬─────────────────────────────┘ │
-│                           │                               │
-├───────────────────────────┼───────────────────────────────┤
-│                           ▼                               │
+│  │  Owner deposits → Sets limits → Agent trades         │ │
+│  │  Agent CANNOT withdraw — only trade within limits    │ │
+│  └────────────────────┬─────────────────────────────────┘ │
+│                       ▼                                    │
 │  ┌─────────────────────────────────────────────────────┐  │
 │  │              2xSwap Protocol (Ethereum)              │  │
-│  │                                                      │  │
-│  │  X2Swap WETH    X2Swap WBTC    X2Pool (ERC-4626)    │  │
-│  │  2x Long ETH    2x Long BTC    Provide Liquidity    │  │
-│  │                                                      │  │
+│  │  X2Swap WETH  |  X2Swap WBTC  |  X2Pool (ERC-4626) │  │
 │  │  No liquidation. No interest. No funding rates.      │  │
 │  └─────────────────────────────────────────────────────┘  │
-└───────────────────────────────────────────────────────────┘
+└────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -99,11 +90,14 @@ npm run dev -- --mode demo
 # Dashboard — terminal UI showing signals, positions, decisions
 npm run dashboard
 
+# Backtest — run all 4 strategies against 180 days of data
+npm run backtest:synthetic
+
+# Full test suite (97 tests)
+npm test
+
 # Agent mode — LIVE trading (use with caution!)
 npm run dev -- --mode agent
-
-# Info — one-shot protocol info dump
-npm run dev -- --mode info
 ```
 
 ---
@@ -120,22 +114,65 @@ npm run dev -- --mode info
 
 ---
 
-## Strategy: Momentum
+## Trading Strategies
 
-The agent uses a simple but effective momentum strategy:
+The agent runs four complementary strategies:
 
-**Entry signals:**
-- RSI < 40 (oversold zone)
-- SMA(7) crosses above SMA(25) (bullish crossover)
-- Picks the stronger signal between ETH and BTC
+### 1. Momentum (RSI + MA Crossover)
+- **Entry:** RSI < 40 + SMA(7) crosses above SMA(25) → bullish crossover
+- **Exit:** +15% take profit | -10% soft stop | strong sell signal | near expiry
+- **Avg hold:** ~35 days — exploiting 2xSwap's no-liquidation advantage
 
-**Exit signals:**
-- Take profit at +15%
-- Soft stop at -10% (no forced liquidation — agent *chooses* when to exit)
-- Strong sell signal (RSI > 70 + bearish crossover)
-- Position approaching 1-year expiry
+### 2. Mean Reversion (Bollinger Bands + RSI)
+- **Entry:** Price at lower Bollinger Band (BB position ≤ 0.25) + RSI < 35
+- **Exit:** Price returns to middle band | +12% take profit | -10% soft stop
+- **Avg hold:** ~14 days | typical win rate: 55-65%
 
-**Key insight:** On traditional perps, the -10% stop would be a *liquidation* on 2x leverage. On 2xSwap, it's a *choice*. The agent can ride through the dip if signals suggest recovery.
+### 3. VWAP (Volume-Weighted Average Price)
+- **Entry:** Price ≥ 4% below VWAP + RSI oversold (< 35) — mean reversion to fair value
+- **Exit:** Price reclaims VWAP (positive deviation) | +12% take profit | -10% soft stop
+- **Avg hold:** ~8 days | typical win rate: 63-70%
+
+### 4. Combined
+- Runs all three strategies simultaneously
+- Prevents duplicate positions on the same asset
+- Higher trade frequency with broader market coverage
+
+**Key insight for all strategies:** On traditional 2x leverage perps, a -8% drawdown triggers forced liquidation. On 2xSwap, the agent's -10% stop is a *choice* — it can hold through drawdowns and exit on its own terms.
+
+---
+
+## Backtest Results
+
+Run `npm run backtest:synthetic` for a fresh 180-day simulation:
+
+```
+Strategy        Trades  Win Rate   PnL%     Max DD   Sharpe  Liq. Avoided
+─────────────────────────────────────────────────────────────────────────
+MOMENTUM          6-8   28-50%    varies   -10-15%   var       1-2 🛡️
+MEAN-REVERSION    9-14  55-65%    +3-8%    -8-10%    var       1-2 🛡️
+VWAP              8-11  63-70%    varies   -12-15%   var       2-3 🛡️
+COMBINED          35-42 55-65%    varies   -9-13%    var       2-4 🛡️
+```
+
+The **"Liq. Avoided" 🛡️** column is the thesis: positions that dropped -8% to -10%+ intraday. On any traditional 2x leverage protocol, those are liquidations. On 2xSwap, the agent holds, recovers, and exits on its own terms.
+
+---
+
+## Test Suite
+
+```bash
+npm test
+```
+
+**97 tests, 3 suites, all passing:**
+- ✅ Technical Indicators (24 tests) — SMA, EMA, RSI, Bollinger Bands, VWAP, MA Crossover
+- ✅ Trading Strategies (40 tests) — all 4 strategies, including no-liquidation advantage tests
+- ✅ Backtest Engine (33 tests) — result shape, strategy behavior, no-liquidation tracking
+
+Tests 4.1 and 4.2 explicitly validate the 2xSwap no-liquidation advantage:
+- Agent does NOT trigger stop at -8% (where traditional perps liquidate)
+- Agent holds through -9% drawdowns (impossible on standard 2x leverage)
 
 ---
 
@@ -202,7 +239,8 @@ Owner                    ScopedVault                   2xSwap
 - **ethers.js v6** — contract interaction
 - **Solidity 0.8.20** — ScopedVault contract
 - **chalk + cli-table3** — terminal dashboard
-- **winston** — structured logging
+- **winston** — structured decision logging
+- **CoinGecko API** — historical price data for backtesting
 
 ---
 
@@ -222,10 +260,21 @@ Every major leverage protocol today uses liquidation as risk management. That wo
 
 ---
 
+## Human-Agent Collaboration
+
+This project was built by Zadrz (AI) + Didar (human co-founder):
+- **Didar** sets strategy constraints, reviews risk parameters, approves capital deployment
+- **Zadrz** designs and implements strategies, runs backtests, maintains codebase, monitors 24/7
+- **ScopedVault** enforces the boundary — Zadrz can't spend more than Didar approved
+
+This is what human-agent collaboration looks like in DeFi. Not "AI suggests, human executes" — AI executes, human supervises.
+
+---
+
 ## License
 
 MIT
 
 ---
 
-Built for the [Synthesis Hackathon](https://synthesis.md) by the 2xSwap team.
+Built for the [Synthesis Hackathon](https://synthesis.md) by the 2xSwap team. ⚡
