@@ -1,5 +1,6 @@
 'use client';
-import { recentDecisions, type Action } from '@/lib/mock-data';
+import { useLiveData } from '@/lib/live-data';
+import { type Action } from '@/lib/mock-data';
 
 const actionStyle: Record<Action, { color: string; bg: string; border: string }> = {
   OPEN:  { color: '#00ff88', bg: 'rgba(0,255,136,0.12)',  border: 'rgba(0,255,136,0.3)' },
@@ -8,13 +9,17 @@ const actionStyle: Record<Action, { color: string; bg: string; border: string }>
 };
 
 export default function DecisionsLog() {
+  const { decisions } = useLiveData();
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color: '#64748b' }}>
           Recent Decisions
         </h2>
-        <span className="text-xs font-mono" style={{ color: '#64748b' }}>last {recentDecisions.length}</span>
+        <div className="flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+          <span className="text-xs font-mono" style={{ color: '#64748b' }}>last {decisions.length}</span>
+        </div>
       </div>
 
       <div
@@ -22,13 +27,13 @@ export default function DecisionsLog() {
         style={{ background: '#1a1a2e', borderColor: '#2a2a4a' }}
       >
         <div className="overflow-y-auto scrollbar-thin" style={{ maxHeight: '360px' }}>
-          {recentDecisions.map((d, i) => {
+          {decisions.map((d, i) => {
             const st = actionStyle[d.action];
             return (
               <div
-                key={i}
+                key={`${d.timestamp}-${i}`}
                 className="flex items-start gap-3 px-4 py-3 hover:bg-white/[0.02] transition-colors"
-                style={{ borderBottom: i < recentDecisions.length - 1 ? '1px solid #1e1e38' : undefined }}
+                style={{ borderBottom: i < decisions.length - 1 ? '1px solid #1e1e38' : undefined }}
               >
                 {/* Timestamp */}
                 <span

@@ -2,7 +2,7 @@
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
-import { equityCurve } from '@/lib/mock-data';
+import { useLiveData } from '@/lib/live-data';
 
 const LINES = [
   { key: 'combined',      name: 'Combined',       color: '#00d4ff' },
@@ -29,17 +29,25 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-// Show only every 10th label
-const tickFormatter = (_: any, index: number) => (index % 10 === 0 ? equityCurve[index]?.time ?? '' : '');
-
 export default function EquityChart() {
+  const { equityCurve } = useLiveData();
+
+  // Show every 10th x-axis tick
+  const tickFormatter = (_: any, index: number) =>
+    index % 10 === 0 ? equityCurve[index]?.time ?? '' : '';
+
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color: '#64748b' }}>
           Equity Curve
         </h2>
-        <span className="text-xs font-mono" style={{ color: '#64748b' }}>Starting capital: $10,000</span>
+        <div className="flex items-center gap-2">
+          {/* Live indicator */}
+          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+          <span className="text-xs font-mono" style={{ color: '#4ade80' }}>LIVE</span>
+          <span className="text-xs font-mono ml-2" style={{ color: '#64748b' }}>Starting capital: $10,000</span>
+        </div>
       </div>
 
       <div
@@ -78,6 +86,7 @@ export default function EquityChart() {
                 strokeWidth={l.key === 'combined' ? 2.5 : 1.5}
                 dot={false}
                 activeDot={{ r: 4, fill: l.color }}
+                isAnimationActive={false}
               />
             ))}
           </LineChart>

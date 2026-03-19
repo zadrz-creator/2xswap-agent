@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { LiveDataProvider } from '@/lib/live-data';
 
 export const metadata: Metadata = {
   title: '2xSwap Autonomous Trading Agent',
@@ -9,7 +10,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <LiveDataProvider>
+          {children}
+        </LiveDataProvider>
+      </body>
     </html>
   );
 }

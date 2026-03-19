@@ -1,5 +1,6 @@
 'use client';
-import { marketSignals, type MarketSignal, type Signal } from '@/lib/mock-data';
+import { useLiveData } from '@/lib/live-data';
+import { type MarketSignal, type Signal } from '@/lib/mock-data';
 
 const signalColors: Record<Signal, string> = {
   'STRONG BUY':  '#00ff88',
@@ -41,12 +42,12 @@ function RSIGauge({ value }: { value: number }) {
         <div className="absolute inset-y-0 left-[70%] w-[30%]" style={{ background: 'rgba(255,68,68,0.15)' }} />
         {/* Fill */}
         <div
-          className="absolute inset-y-0 left-0 rounded-full transition-all"
+          className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
           style={{ width: `${pct}%`, background: color, opacity: 0.7 }}
         />
         {/* Needle */}
         <div
-          className="absolute top-0 bottom-0 w-0.5 rounded"
+          className="absolute top-0 bottom-0 w-0.5 rounded transition-all duration-700"
           style={{ left: `${pct}%`, background: color, boxShadow: `0 0 4px ${color}` }}
         />
       </div>
@@ -67,7 +68,7 @@ function BBBar({ position }: { position: number }) {
       </div>
       <div className="relative h-2 rounded-full overflow-hidden" style={{ background: '#0a0a0a' }}>
         <div
-          className="absolute inset-y-0 left-0 rounded-full"
+          className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
           style={{ width: `${position * 100}%`, background: color }}
         />
       </div>
@@ -98,18 +99,18 @@ function Card({ s }: { s: MarketSignal }) {
           <div className="flex items-center gap-2">
             <span className="text-xl font-bold" style={{ color: '#00d4ff' }}>{s.asset}</span>
             <span
-              className="text-xs font-mono px-1.5 py-0.5 rounded"
+              className="text-xs font-mono px-1.5 py-0.5 rounded transition-colors duration-500"
               style={{ color: pricePositive ? '#00ff88' : '#ff4444', background: pricePositive ? 'rgba(0,255,136,0.1)' : 'rgba(255,68,68,0.1)' }}
             >
               {pricePositive ? '+' : ''}{s.priceChange24h.toFixed(1)}% 24h
             </span>
           </div>
-          <div className="font-mono text-2xl font-bold mt-1" style={{ color: '#e2e8f0' }}>
+          <div className="font-mono text-2xl font-bold mt-1 transition-all duration-500" style={{ color: '#e2e8f0' }}>
             ${s.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
         </div>
         <div
-          className="px-3 py-1.5 rounded-lg text-xs font-bold text-center"
+          className="px-3 py-1.5 rounded-lg text-xs font-bold text-center transition-colors duration-500"
           style={{ background: signalBg[s.signal], color: sc, border: `1px solid ${sc}40` }}
         >
           {s.signal}
@@ -127,7 +128,7 @@ function Card({ s }: { s: MarketSignal }) {
         <div className="rounded-lg p-2.5" style={{ background: '#0d0d1f' }}>
           <div className="text-xs mb-1" style={{ color: '#64748b' }}>VWAP Dev</div>
           <div
-            className="font-mono text-sm font-bold"
+            className="font-mono text-sm font-bold transition-colors duration-500"
             style={{ color: vwapPositive ? '#f97316' : '#4ade80' }}
           >
             {vwapPositive ? '+' : ''}{s.vwapDeviation.toFixed(2)}%
@@ -145,13 +146,14 @@ function Card({ s }: { s: MarketSignal }) {
 }
 
 export default function MarketSignals() {
+  const { signals } = useLiveData();
   return (
     <section>
       <h2 className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: '#64748b' }}>
         Market Signals
       </h2>
       <div className="flex flex-col sm:flex-row gap-4">
-        {marketSignals.map(s => <Card key={s.asset} s={s} />)}
+        {signals.map(s => <Card key={s.asset} s={s} />)}
       </div>
     </section>
   );

@@ -1,5 +1,5 @@
 'use client';
-import { agentStatus } from '@/lib/mock-data';
+import { useLiveData } from '@/lib/live-data';
 
 const modeBadge: Record<string, string> = {
   DEMO: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40',
@@ -8,6 +8,7 @@ const modeBadge: Record<string, string> = {
 };
 
 export default function Header() {
+  const { agentStatus } = useLiveData();
   return (
     <header
       className="sticky top-0 z-50 w-full border-b"

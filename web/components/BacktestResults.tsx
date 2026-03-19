@@ -1,7 +1,8 @@
 'use client';
-import { backtestResults } from '@/lib/mock-data';
+import { useLiveData } from '@/lib/live-data';
 
 export default function BacktestResults() {
+  const { backtestResults } = useLiveData();
   return (
     <section>
       <h2 className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: '#64748b' }}>

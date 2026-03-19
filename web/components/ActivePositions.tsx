@@ -1,7 +1,8 @@
 'use client';
-import { activePositions } from '@/lib/mock-data';
+import { useLiveData } from '@/lib/live-data';
 
 export default function ActivePositions() {
+  const { positions } = useLiveData();
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
@@ -12,7 +13,7 @@ export default function ActivePositions() {
           className="px-2 py-0.5 rounded-full text-xs font-mono border"
           style={{ borderColor: '#00d4ff40', color: '#00d4ff', background: 'rgba(0,212,255,0.08)' }}
         >
-          {activePositions.length} open
+          {positions.length} open
         </span>
       </div>
 
@@ -20,7 +21,7 @@ export default function ActivePositions() {
         className="rounded-xl border overflow-hidden"
         style={{ background: '#1a1a2e', borderColor: '#2a2a4a' }}
       >
-        {activePositions.length === 0 ? (
+        {positions.length === 0 ? (
           <div className="py-12 text-center" style={{ color: '#64748b' }}>
             No active positions
           </div>
@@ -41,12 +42,12 @@ export default function ActivePositions() {
                 </tr>
               </thead>
               <tbody>
-                {activePositions.map((p, i) => {
+                {positions.map((p, i) => {
                   const pnlColor = p.pnlPct >= 0 ? '#00ff88' : '#ff4444';
                   return (
                     <tr
                       key={p.id}
-                      style={{ borderBottom: i < activePositions.length - 1 ? '1px solid #1e1e38' : undefined }}
+                      style={{ borderBottom: i < positions.length - 1 ? '1px solid #1e1e38' : undefined }}
                       className="hover:bg-white/[0.02] transition-colors"
                     >
                       <td className="px-4 py-3 font-mono text-xs" style={{ color: '#64748b' }}>{p.id}</td>
@@ -57,12 +58,12 @@ export default function ActivePositions() {
                       <td className="px-4 py-3 font-mono text-xs" style={{ color: '#94a3b8' }}>
                         ${p.openPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs" style={{ color: '#e2e8f0' }}>
+                      <td className="px-4 py-3 font-mono text-xs transition-all duration-500" style={{ color: '#e2e8f0' }}>
                         ${p.currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </td>
                       <td className="px-4 py-3">
                         <span
-                          className="font-mono text-sm font-bold px-2 py-0.5 rounded"
+                          className="font-mono text-sm font-bold px-2 py-0.5 rounded transition-all duration-500"
                           style={{
                             color: pnlColor,
                             background: p.pnlPct >= 0 ? 'rgba(0,255,136,0.1)' : 'rgba(255,68,68,0.1)',
