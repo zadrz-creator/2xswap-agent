@@ -3,9 +3,9 @@ import { PriceHistory, getAssetPrices } from '../utils/prices';
 import { logDecision } from '../utils/logger';
 
 export type TradeAction =
-  | { type: 'open'; asset: 'eth' | 'btc'; reason: string; confidence: number }
-  | { type: 'close'; asset: 'eth' | 'btc'; positionId: bigint; reason: string }
-  | { type: 'hold'; reason: string };
+  | { type: 'open'; asset: 'eth' | 'btc'; reason: string; confidence: number; strategy?: string }
+  | { type: 'close'; asset: 'eth' | 'btc'; positionId: bigint; reason: string; strategy?: string }
+  | { type: 'hold'; reason: string; strategy?: string };
 
 export interface ActivePosition {
   id: bigint;

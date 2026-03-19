@@ -219,6 +219,8 @@ Owner                    ScopedVault                   2xSwap
 | `MAX_TOTAL_EXPOSURE_USDC` | Max total open | 5000 |
 | `MAX_SLIPPAGE_BPS` | Max slippage in bps | 100 |
 | `SCOPED_VAULT` | Vault contract address | Optional |
+| `TELEGRAM_BOT_TOKEN` | Bot token for position alerts | Optional |
+| `TELEGRAM_CHAT_ID` | Chat ID for alerts | Optional |
 
 ---
 

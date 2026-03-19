@@ -83,7 +83,16 @@ Real-time terminal UI showing:
 - Agent decision log with reasoning
 - Protocol state (pool TVL, swap ratios)
 
-### 5. Comprehensive Test Suite (97 tests)
+### 5. Telegram Position Alerts (`src/utils/alerts.ts`)
+Real-time human-agent communication via Telegram:
+- **Startup alert** — agent announces mode, wallet, limits when started
+- **Position open** — instant notification with asset, price, strategy, reasoning
+- **Position close** — P&L, hold time, reason — full trade lifecycle in your pocket
+- **Cycle digest** — periodic summary every 24 cycles (configurable)
+- Graceful fallback: if `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` not set → no-op, agent runs normally
+- Demonstrates real human oversight loop: human gets alerted → can inspect → can stop agent
+
+### 6. Comprehensive Test Suite (97 tests)
 - 24 indicator tests (SMA, EMA, RSI, BB, VWAP, MA Crossover)
 - 40 strategy tests (all 4 strategies)
 - 33 backtest engine tests
@@ -192,6 +201,7 @@ cd 2xswap-agent
 npm install
 cp .env.example .env
 # Add your RPC_URL (Ethereum mainnet)
+# Optional: TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID for live position alerts
 ```
 
 ### 1. Run the full test suite (no config needed)
@@ -243,7 +253,7 @@ Outputs: simulated position opens/closes with full reasoning log.
 2. **Claude integration** — use Opus for position sizing decisions (already running via OpenClaw)
 3. **LP management** — agent deposits idle USDC into X2Pool for yield
 4. **Real capital deployment** — currently in monitor/demo mode, moving to live
-5. **Telegram alerts** — position webhooks via Telegram bot
+5. **Telegram alerts** — ✅ Implemented — position open/close alerts, startup notification, cycle digests
 
 ---
 

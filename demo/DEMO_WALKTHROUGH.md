@@ -244,6 +244,61 @@ RPC_URL=<your-endpoint> PRIVATE_KEY=<any-key> npm run demo
 
 ---
 
+## Step 6: Telegram Alerts — Human-Agent Loop
+
+Configure in `.env`:
+```env
+TELEGRAM_BOT_TOKEN=your_bot_token_from_botfather
+TELEGRAM_CHAT_ID=your_chat_id
+```
+
+When configured, the agent sends real-time alerts to Telegram:
+
+**On startup:**
+```
+🎭 2xSwap Agent Started — DEMO mode
+
+👛 Wallet: 0xYourWallet...
+💰 Max per trade: $1,000
+🏦 Max exposure: $5,000
+
+Running 4 strategies: Momentum, Mean Reversion, VWAP, Combined
+Monitoring ETH + BTC on Ethereum mainnet 📡
+
+No liquidation. Agent holds through volatility. ⚡
+```
+
+**On position open:**
+```
+⚡ 2xSwap Agent — Position Opened [DEMO]
+
+📈 ETH @ $2241
+💰 Size: $1,000
+🎯 Strategy: MOMENTUM
+🔖 Position ID: 847291
+
+📝 BUY on ETH | RSI: 34.1 | SMA7/25: 2210/2254 | Vol: 28.3%
+
+No liquidation. No interest. Agent holds until exit conditions. ⚡
+```
+
+**On position close:**
+```
+✅ 2xSwap Agent — Position Closed [DEMO]
+
+📉 ETH exit @ $2580
+💸 P&L: +15.1% (+$150.75)
+⏱ Hold time: 23.4 days
+🎯 Strategy: MOMENTUM
+🔖 Position ID: 847291
+
+📝 Take profit: +15.1%
+```
+
+**Key insight:** Traditional protocols use liquidations as their feedback loop to the trader. 2xSwap lets the agent decide. The Telegram alert is the human feedback loop — you know what's happening, you can intervene, but you don't have to.
+
+---
+
 ## The Core Thesis Demonstrated
 
 Every run shows the same thing:

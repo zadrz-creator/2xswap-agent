@@ -9,6 +9,12 @@ import { computeSignals } from './utils/indicators';
 import { getAssetPrices } from './utils/prices';
 import { usdcToWethPath, usdcToWbtcPath, wethToUsdcPath, wbtcToUsdcPath } from './utils/swap-path';
 import { formatUnits } from 'ethers';
+import {
+  alertPositionOpen,
+  alertPositionClose,
+  alertAgentStarted,
+  alertCycleDigest,
+} from './utils/alerts';
 
 export interface AgentState {
   priceHistory: PriceHistory;
@@ -65,6 +71,14 @@ export class TradingAgent {
 
     this.running = true;
     logger.info('Agent started. Beginning trading loop...\n');
+
+    // Send startup alert
+    await alertAgentStarted(
+      this.client.address,
+      config.agentMode,
+      config.maxPositionUsdc,
+      config.maxTotalExposureUsdc
+    );
 
     while (this.running) {
       try {
@@ -124,6 +138,16 @@ export class TradingAgent {
       await this.executeAction(action, prices);
     }
 
+    // 4. Periodic digest
+    const sessionPnl = this.calcSessionPnlPct(prices);
+    await alertCycleDigest(
+      this.state.cycleCount,
+      prices.eth,
+      prices.btc,
+      this.state.activePositions.length,
+      sessionPnl
+    );
+
     const elapsed = Date.now() - cycleStart;
     logger.debug(`Cycle completed in ${elapsed}ms`);
   }
@@ -142,19 +166,36 @@ export class TradingAgent {
       // In demo mode, simulate without on-chain execution
       if (action.type === 'open') {
         const fakeId = BigInt(Math.floor(Math.random() * 1000000));
+        const openPrice = action.asset === 'eth' ? prices.eth : prices.btc;
         this.state.activePositions.push({
           id: fakeId,
           asset: action.asset,
-          openPrice: action.asset === 'eth' ? prices.eth : prices.btc,
+          openPrice,
           openAmount: config.maxPositionUsdc,
           openTime: Date.now(),
         });
         logger.info(`[DEMO] Simulated open position #${fakeId} on ${action.asset.toUpperCase()}`);
+        // Fire alert (async, non-blocking)
+        alertPositionOpen(
+          action.asset, openPrice, config.maxPositionUsdc,
+          fakeId, action.strategy ?? 'combined', action.reason, 'demo'
+        ).catch(() => {});
       } else if (action.type === 'close') {
+        const pos = this.state.activePositions.find((p) => p.id === action.positionId);
         this.state.activePositions = this.state.activePositions.filter(
           (p) => p.id !== action.positionId
         );
         logger.info(`[DEMO] Simulated close position #${action.positionId}`);
+        if (pos) {
+          const currentPrice = pos.asset === 'eth' ? prices.eth : prices.btc;
+          const pnlPct = pos.openPrice > 0 ? ((currentPrice - pos.openPrice) / pos.openPrice) * 100 : 0;
+          const pnlUsdc = (pnlPct / 100) * pos.openAmount;
+          const holdDays = (Date.now() - pos.openTime) / (1000 * 60 * 60 * 24);
+          alertPositionClose(
+            pos.asset, currentPrice, pnlPct, pnlUsdc,
+            pos.id, action.strategy ?? 'combined', action.reason, holdDays, 'demo'
+          ).catch(() => {});
+        }
       }
       return;
     }
@@ -168,21 +209,37 @@ export class TradingAgent {
           config.maxPositionUsdc,
           path
         );
+        const openPrice = action.asset === 'eth' ? prices.eth : prices.btc;
         this.state.activePositions.push({
           id: posId,
           asset: action.asset,
-          openPrice: action.asset === 'eth' ? prices.eth : prices.btc,
+          openPrice,
           openAmount: config.maxPositionUsdc,
           openTime: Date.now(),
         });
         logger.info(`✅ Position #${posId} opened on ${action.asset.toUpperCase()}`);
+        alertPositionOpen(
+          action.asset, openPrice, config.maxPositionUsdc,
+          posId, action.strategy ?? 'combined', action.reason, 'agent'
+        ).catch(() => {});
       } else if (action.type === 'close') {
+        const pos = this.state.activePositions.find((p) => p.id === action.positionId);
         const path = action.asset === 'eth' ? wethToUsdcPath() : wbtcToUsdcPath();
         await this.client.closePosition(action.asset, action.positionId, path);
         this.state.activePositions = this.state.activePositions.filter(
           (p) => p.id !== action.positionId
         );
         logger.info(`✅ Position #${action.positionId} closed on ${action.asset.toUpperCase()}`);
+        if (pos) {
+          const currentPrice = pos.asset === 'eth' ? prices.eth : prices.btc;
+          const pnlPct = pos.openPrice > 0 ? ((currentPrice - pos.openPrice) / pos.openPrice) * 100 : 0;
+          const pnlUsdc = (pnlPct / 100) * pos.openAmount;
+          const holdDays = (Date.now() - pos.openTime) / (1000 * 60 * 60 * 24);
+          alertPositionClose(
+            pos.asset, currentPrice, pnlPct, pnlUsdc,
+            pos.id, action.strategy ?? 'combined', action.reason, holdDays, 'agent'
+          ).catch(() => {});
+        }
       }
     } catch (err) {
       logger.error(`Failed to execute ${action.type}`, { error: (err as Error).message });
@@ -271,6 +328,21 @@ export class TradingAgent {
   }
 
   // ── Helpers ─────────────────────────────────────────────────────
+
+  private calcSessionPnlPct(prices: PriceData): number {
+    if (this.state.activePositions.length === 0) return 0;
+    let totalInvested = 0;
+    let totalCurrent = 0;
+    for (const pos of this.state.activePositions) {
+      if (pos.openPrice <= 0) continue;
+      const currentPrice = pos.asset === 'eth' ? prices.eth : prices.btc;
+      const pnl = ((currentPrice - pos.openPrice) / pos.openPrice) * pos.openAmount;
+      totalInvested += pos.openAmount;
+      totalCurrent += pos.openAmount + pnl;
+    }
+    if (totalInvested === 0) return 0;
+    return ((totalCurrent - totalInvested) / totalInvested) * 100;
+  }
 
   private logAction(action: TradeAction): void {
     const entry: DecisionLog = {
