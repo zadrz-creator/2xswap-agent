@@ -19,6 +19,7 @@ import {
   type Decision,
   type BacktestResult,
   type EquityPoint,
+  type LiqEvent,
   marketSignals as initSignals,
   activePositions as initPositions,
   recentDecisions as initDecisions,
@@ -42,6 +43,8 @@ interface LiveState {
   backtestResults: BacktestResult[];
   equityCurve: EquityPoint[];
   agentStatus: AgentStatus;
+  liquidationsAvoided: number;
+  liquidationEvents: LiqEvent[];
   lastTick: number;
 }
 
@@ -107,11 +110,29 @@ export function useLiveData(): LiveCtx {
   return ctx;
 }
 
+// ── Liquidation event data (module-level constants) ───────────────────────────
+const INIT_LIQ_EVENTS: LiqEvent[] = [
+  { asset: 'ETH', wick: '-8.2%', protocol: 'GMX', holdDays: 14, finalPnl: '+12.3%' },
+  { asset: 'BTC', wick: '-11.4%', protocol: 'dYdX', holdDays: 9, finalPnl: '+7.8%' },
+  { asset: 'ETH', wick: '-9.7%', protocol: 'Perp v2', holdDays: 21, finalPnl: '+18.1%' },
+  { asset: 'BTC', wick: '-7.8%', protocol: 'GMX', holdDays: 6, finalPnl: '+5.4%' },
+];
+
+const LIQ_POOL: LiqEvent[] = [
+  { asset: 'ETH', wick: '-13.1%', protocol: 'Binance Futures', holdDays: 31, finalPnl: '+22.6%' },
+  { asset: 'BTC', wick: '-6.5%', protocol: 'dYdX', holdDays: 4, finalPnl: '+3.9%' },
+  { asset: 'ETH', wick: '-10.3%', protocol: 'GMX', holdDays: 18, finalPnl: '+14.7%' },
+  { asset: 'BTC', wick: '-8.9%', protocol: 'Perp v2', holdDays: 12, finalPnl: '+9.2%' },
+  { asset: 'ETH', wick: '-7.1%', protocol: 'Binance Futures', holdDays: 8, finalPnl: '+6.3%' },
+  { asset: 'BTC', wick: '-15.2%', protocol: 'GMX', holdDays: 42, finalPnl: '+31.4%' },
+];
+
 // ── Provider ──────────────────────────────────────────────────────────────────
 export function LiveDataProvider({ children }: { children: React.ReactNode }) {
   const startTime = useRef(Date.now() - 4 * 3600_000 - 23 * 60_000); // match "4h 23m" initial uptime
   const cycleRef = useRef(initStatus.cycleCount);
   const decisionRef = useRef(0);
+  const liqRef = useRef(0); // ticks since last liquidation event
 
   const [state, setState] = useState<LiveState>({
     signals: initSignals,
@@ -120,6 +141,8 @@ export function LiveDataProvider({ children }: { children: React.ReactNode }) {
     backtestResults,
     equityCurve: initCurve,
     agentStatus: { ...initStatus },
+    liquidationsAvoided: 4,
+    liquidationEvents: INIT_LIQ_EVENTS,
     lastTick: Date.now(),
   });
 
@@ -185,7 +208,17 @@ export function LiveDataProvider({ children }: { children: React.ReactNode }) {
         cycleCount: cycleRef.current,
       };
 
-      return { ...prev, signals, positions, equityCurve, decisions, agentStatus, lastTick: Date.now() };
+      // ── Maybe add a liquidation event (every ~2 min = every 12 ticks) ────
+      let liquidationsAvoided = prev.liquidationsAvoided;
+      let liquidationEvents = prev.liquidationEvents;
+      liqRef.current++;
+      if (liqRef.current % 12 === 0) {
+        const pick = LIQ_POOL[Math.floor(Math.random() * LIQ_POOL.length)];
+        liquidationsAvoided = prev.liquidationsAvoided + 1;
+        liquidationEvents = [pick, ...prev.liquidationEvents.slice(0, 7)];
+      }
+
+      return { ...prev, signals, positions, equityCurve, decisions, agentStatus, liquidationsAvoided, liquidationEvents, lastTick: Date.now() };
     });
   }, []);
 

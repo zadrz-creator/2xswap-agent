@@ -1,6 +1,7 @@
 import Header from '@/components/Header';
 import MarketSignals from '@/components/MarketSignals';
 import ActivePositions from '@/components/ActivePositions';
+import LiquidationsAvoided from '@/components/LiquidationsAvoided';
 import EquityChart from '@/components/EquityChart';
 import DecisionsLog from '@/components/DecisionsLog';
 import BacktestResults from '@/components/BacktestResults';
@@ -13,6 +14,7 @@ export default function Dashboard() {
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-8">
         <MarketSignals />
         <ActivePositions />
+        <LiquidationsAvoided />
 
         {/* Two-col layout for chart + decisions */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

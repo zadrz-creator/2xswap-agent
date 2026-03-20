@@ -40,6 +40,14 @@ export interface BacktestResult {
   liquidationsAvoided: number;
 }
 
+export interface LiqEvent {
+  asset: string;
+  wick: string;
+  protocol: string;
+  holdDays: number;
+  finalPnl: string;
+}
+
 export interface EquityPoint {
   time: string;
   momentum: number;
