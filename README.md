@@ -95,8 +95,11 @@ npm run dashboard
 # Backtest — run all 4 strategies against 180 days of data
 npm run backtest:synthetic
 
-# Full test suite (97 tests)
+# Full test suite (97 TypeScript tests)
 npm test
+
+# ScopedVault contract tests (35 Solidity tests)
+cd contracts && npm test && cd ..
 
 # Agent mode — LIVE trading (use with caution!)
 npm run dev -- --mode agent
@@ -167,14 +170,37 @@ The **"Liq. Avoided" 🛡️** column is the thesis: positions that dropped -8% 
 npm test
 ```
 
-**97 tests, 3 suites, all passing:**
+**132 tests total — 97 TypeScript agent tests + 35 Solidity contract tests:**
+
+```bash
+# TypeScript agent tests (97 tests)
+npm test
+
+# ScopedVault contract tests (35 tests)
+cd contracts && npm test
+```
+
+**TypeScript — 97 tests, 3 suites:**
 - ✅ Technical Indicators (24 tests) — SMA, EMA, RSI, Bollinger Bands, VWAP, MA Crossover
 - ✅ Trading Strategies (40 tests) — all 4 strategies, including no-liquidation advantage tests
 - ✅ Backtest Engine (33 tests) — result shape, strategy behavior, no-liquidation tracking
 
-Tests 4.1 and 4.2 explicitly validate the 2xSwap no-liquidation advantage:
+**Solidity — 35 tests, 7 sections:**
+- ✅ Deployment (6) — initial state correct
+- ✅ Access Control (6) — agent CANNOT withdraw, only owner can
+- ✅ Per-Trade Limits (2) — enforced before any ERC20 transfer
+- ✅ Exposure Limits (5) — tracks live exposure, caps at owner-set max
+- ✅ Owner Configuration (6) — rotate agent, disable instantly, update limits
+- ✅ Events & Audit Trail (4) — every position emits indexed events
+- ✅ Core Thesis Lifecycle (6) — open → hold 24h → close, no forced liquidation
+
+Tests 4.1 and 4.2 (TypeScript) explicitly validate the 2xSwap no-liquidation advantage:
 - Agent does NOT trigger stop at -8% (where traditional perps liquidate)
 - Agent holds through -9% drawdowns (impossible on standard 2x leverage)
+
+Test 7.6 (Solidity) runs the full agent lifecycle on-chain:
+- Open position → advance blockchain time 24h → close on agent's own terms
+- Simulates exactly what 2xSwap enables that traditional perps cannot
 
 ---
 
@@ -206,6 +232,7 @@ Owner                    ScopedVault                   2xSwap
 - Time window rate limiting
 - Full event audit trail
 - Owner can withdraw anytime
+- **35/35 Solidity tests passing** — run `cd contracts && npm test`
 
 ---
 

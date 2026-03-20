@@ -1,6 +1,6 @@
 # Demo Walkthrough — 2xSwap Autonomous Trading Agent
 
-> Generated: March 20, 2026 | Synthesis Hackathon | 4 strategies, 97 tests, deadline Mar 22 | LOG_LEVEL=error for clean demo output | ASCII equity curve added | Live web dashboard deployed | Liquidations Avoided live counter added
+> Generated: March 20, 2026 | Synthesis Hackathon | 4 strategies, 132 tests (97 TS + 35 Solidity), deadline Mar 22 | LOG_LEVEL=error for clean demo output | ASCII equity curve added | Live web dashboard deployed | Liquidations Avoided live counter added | ScopedVault contract fully tested
 
 **🌐 Live Dashboard (no install needed):** https://zadrz-creator.github.io/2xswap-agent/
 
@@ -285,7 +285,82 @@ RPC_URL=<your-endpoint> PRIVATE_KEY=<any-key> npm run demo
 
 ---
 
-## Step 6: Telegram Alerts — Human-Agent Loop
+## Step 1b: ScopedVault Contract Tests — On-Chain Security Proof
+
+```bash
+cd contracts
+npm install
+npm test
+```
+
+**Output (35 tests, all passing):**
+
+```
+  ScopedVault — Security & Limits Tests
+    1. Deployment
+      ✔ 1.1 sets owner correctly
+      ✔ 1.2 sets agent correctly
+      ✔ 1.3 sets maxPerTrade correctly
+      ✔ 1.4 sets maxTotalExposure correctly
+      ✔ 1.5 vault balance reflects deposit
+      ✔ 1.6 currentExposure starts at zero
+    2. Access Control (KEY SAFETY PROPERTY)
+      ✔ 2.1 agent CANNOT call withdraw — user funds are safe
+      ✔ 2.2 attacker CANNOT call withdraw
+      ✔ 2.3 attacker CANNOT set agent address
+      ✔ 2.4 stranger CANNOT call executeOpenPosition
+      ✔ 2.5 owner CAN withdraw their own funds
+      ✔ 2.6 all non-owners denied withdraw — vault stays intact
+    3. Per-Trade Limit Enforcement
+      ✔ 3.1 rejects trade exceeding maxPerTrade
+      ✔ 3.2 rejects trade way over maxPerTrade ($10k attempt)
+    4. Exposure Limit Enforcement
+      ✔ 4.1 availableForTrading capped at maxTotalExposure (not vault balance)
+      ✔ 4.2 exposure tracked after opening position
+      ✔ 4.3 available decreases after opening position
+      ✔ 4.4 rejects trade that would exceed maxTotalExposure
+      ✔ 4.5 exposure decreases after closing position
+    5. Owner Configuration
+      ✔ 5.1 owner can reduce maxPerTrade
+      ✔ 5.2 owner can reduce maxTotalExposure
+      ✔ 5.3 non-owner CANNOT update limits
+      ✔ 5.4 owner can rotate agent address
+      ✔ 5.5 AgentUpdated event emitted on rotation
+      ✔ 5.6 owner can disable agent instantly (set to zero address)
+    6. Events & Audit Trail
+      ✔ 6.1 Deposited event emitted on deposit
+      ✔ 6.2 Withdrawn event emitted on withdrawal
+      ✔ 6.3 PositionOpened event emitted with correct data
+      ✔ 6.4 PositionClosed event emitted on close
+    7. Core Thesis — Agent-Safe Leverage on 2xSwap
+      ✔ 7.1 Agent CAN open positions (correct caller)
+      ✔ 7.2 Agent spending is bounded — cannot exceed owner-set limit
+      ✔ 7.3 Agent CANNOT drain vault — withdrawal is owner-only
+      ✔ 7.4 positionX2Swap mapping tracks which contract opened which position
+      ✔ 7.5 cannot close position from wrong x2swap contract
+      ✔ 7.6 full lifecycle: open → hold → close, exposure tracks correctly
+
+  35 passing (894ms)
+```
+
+### What test 7.6 proves
+
+The most important test: **full position lifecycle on a local blockchain**
+
+1. Deploy ScopedVault + MockX2Swap (simulates real 2xSwap)
+2. Fund vault with $10,000 USDC
+3. Agent opens a $1,000 position
+4. **Advance blockchain time by 24 hours** (`evm_increaseTime`) — position still alive
+5. Agent closes on its own terms
+6. Exposure returns to zero
+
+On Binance perpetuals with 2x leverage, that same position would have hit the funding rate during those 24 hours. On GMX/dYdX, a wick could have triggered liquidation. On 2xSwap: the agent holds until it decides to exit.
+
+The test runs this in 2 seconds on a local Hardhat chain. The same logic applies on mainnet.
+
+---
+
+## Step 7: Telegram Alerts — Human-Agent Loop
 
 Configure in `.env`:
 ```env

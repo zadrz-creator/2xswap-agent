@@ -1,0 +1,2 @@
+:HL["/2xswap-agent/_next/static/chunks/0cac4.t92lel-.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"-WRw7altjB85Y3aIeFut7"}

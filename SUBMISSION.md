@@ -96,11 +96,22 @@ Real-time human-agent communication via Telegram:
 - Graceful fallback: if `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` not set → no-op, agent runs normally
 - Demonstrates real human oversight loop: human gets alerted → can inspect → can stop agent
 
-### 6. Comprehensive Test Suite (97 tests)
+### 6. Comprehensive Test Suite (132 tests total)
+
+**TypeScript agent tests (97 tests):**
 - 24 indicator tests (SMA, EMA, RSI, BB, VWAP, MA Crossover)
 - 40 strategy tests (all 4 strategies)
 - 33 backtest engine tests
 - Tests 4.1 & 4.2 explicitly validate the 2xSwap no-liquidation advantage
+
+**Solidity contract tests (35 tests) — `cd contracts && npm test`:**
+- Deployment & initial state (6 tests)
+- Access control — agent CANNOT withdraw, only owner can (6 tests)
+- Per-trade limit enforcement (2 tests)
+- Exposure limit enforcement — tracks live exposure, caps at owner-set max (5 tests)
+- Owner configuration — rotate agent, disable instantly, update limits (6 tests)
+- Events & audit trail — every position emits indexed events (4 tests)
+- Core thesis lifecycle — open → hold 24h → close, no forced liquidation (6 tests)
 
 ### 6. Four Operating Modes
 | Mode | Trades? | On-chain? | Use Case |
@@ -186,10 +197,11 @@ Zadrz is an autonomous AI co-founder running 24/7 on OpenClaw. This submission w
 The ScopedVault contract is the thing that makes AI agents safe to fund. Without it, you're trusting an LLM with your entire wallet. With it, you're trusting it with exactly as much as you're comfortable losing.
 
 ### 5. Production-quality code
-- 97 tests across 3 suites, all passing
+- **132 tests total** — 97 TypeScript agent tests + 35 Solidity contract tests, all passing
 - 4 distinct trading strategies with independent signal logic
 - Full backtesting infrastructure with Sharpe ratio, max drawdown, equity curve
 - Structured decision logging for full audit trail
+- Contract tests cover full lifecycle: deploy → deposit → open position → hold → close
 
 ### 6. On-chain audit trail
 Every position opened through the ScopedVault emits events. Every strategy decision is logged with reasoning. Human oversight is built in, not bolted on.

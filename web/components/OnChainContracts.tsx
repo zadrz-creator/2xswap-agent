@@ -23,8 +23,8 @@ const CONTRACTS = [
   },
   {
     label: 'ScopedVault (agent contract)',
-    address: 'Not yet deployed — local Solidity ready',
-    role: 'Scoped permissions: agent trades within owner-defined limits',
+    address: 'Solidity + 35 tests ✓ — deploy-ready',
+    role: 'Scoped permissions: agent trades within owner-defined limits. 35/35 tests passing.',
     color: '#00ff88',
     pending: true,
   },
