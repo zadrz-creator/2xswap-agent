@@ -7,6 +7,7 @@ import EquityChart from '@/components/EquityChart';
 import DecisionsLog from '@/components/DecisionsLog';
 import BacktestResults from '@/components/BacktestResults';
 import ProtocolComparison from '@/components/ProtocolComparison';
+import OnChainContracts from '@/components/OnChainContracts';
 
 export default function Dashboard() {
   return (
@@ -32,6 +33,9 @@ export default function Dashboard() {
         </div>
 
         <BacktestResults />
+
+        {/* On-chain contracts — clickable proof for judges */}
+        <OnChainContracts />
 
         {/* Protocol comparison — the "why" section */}
         <ProtocolComparison />
