@@ -1,10 +1,12 @@
 import Header from '@/components/Header';
+import AgentStats from '@/components/AgentStats';
 import MarketSignals from '@/components/MarketSignals';
 import ActivePositions from '@/components/ActivePositions';
 import LiquidationsAvoided from '@/components/LiquidationsAvoided';
 import EquityChart from '@/components/EquityChart';
 import DecisionsLog from '@/components/DecisionsLog';
 import BacktestResults from '@/components/BacktestResults';
+import ProtocolComparison from '@/components/ProtocolComparison';
 
 export default function Dashboard() {
   return (
@@ -12,6 +14,9 @@ export default function Dashboard() {
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-8">
+        {/* Top-line stats — first thing judges see */}
+        <AgentStats />
+
         <MarketSignals />
         <ActivePositions />
         <LiquidationsAvoided />
@@ -27,6 +32,9 @@ export default function Dashboard() {
         </div>
 
         <BacktestResults />
+
+        {/* Protocol comparison — the "why" section */}
+        <ProtocolComparison />
       </main>
 
       {/* Footer */}
